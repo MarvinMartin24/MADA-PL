@@ -1,0 +1,35 @@
+input:
+  dataset:
+    src: "MNIST"
+    tgts: ["MNISTM"]
+    transformation :
+        img_size: 512 # size of input if images input
+        mean_normalization: [0.485, 0.456, 0.406] # mean used for normalization (from resnet34)
+        std_normalization: [0.229, 0.224, 0.225] # std used for normalization (from resnet34)
+
+model:
+  type : DANN
+  backbone: resnet34
+  pretrained_backbone: imagenet
+  n_layers_freeze: 24
+
+training:
+  gpus: 1
+  num_workers: 4
+  optimizer:
+    type: Adam
+    lr: 0.0003
+    weight_decay: 2.5e-5
+  scheduler:
+    lr_schedule: true
+    alpha: 10
+    gamma: 10
+    beta: 0.75
+  batch_size: 12
+  epochs: 2
+
+seed: 8888
+
+output:
+  save: true
+  save_path : ""
