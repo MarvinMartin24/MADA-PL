@@ -36,7 +36,7 @@ class DataModule(pl.LightningDataModule):
         self.train_set_tgts = get_train_tgts(self.cfg) # is a list of torch Datasets
 
         # Get the size of the dataloader for the loss later
-        min_len_dataloader_tgts = min([len(tgt) for tgt in self.train_set_tgts])
+        min_len_dataloader_tgts = min([len(tgt.dataset) for tgt in self.train_set_tgts])
         self.len_dataloader = min(len(self.train_set_src), min_len_dataloader_tgts)
 
         # Load Test (should be from one of the Target distribution)
@@ -66,8 +66,9 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.cfg["training"]["num_workers"])
 
     def test_dataloader(self):
+        concat_test_set = ConcatDataset(*self.test_set_tgts)
         return DataLoader(
-            self.test_set,
+            concat_test_set,
             shuffle=False,
             batch_size=self.cfg["training"]["batch_size"],
             num_workers=self.cfg["training"]["num_workers"])

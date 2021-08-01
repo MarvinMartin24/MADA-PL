@@ -1,4 +1,7 @@
 import torch.utils.data as data
+import os
+import torch
+from PIL import Image
 
 class MNISTM(data.Dataset):
     """`MNIST-M Dataset."""

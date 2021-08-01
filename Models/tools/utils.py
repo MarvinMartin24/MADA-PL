@@ -1,15 +1,41 @@
 import torch
 import numpy as np
 import torchvision
+import pytorch_lightning as pl
+import wandb
 from torchvision import transforms
 
 from tools.MNISTM import MNISTM
 
+class ImagePredictionLogger(pl.Callback):
+    def __init__(self, val_samples, title, num_samples=32):
+        super().__init__()
+        self.val_imgs, self.val_labels = next(val_samples)
+        self.val_imgs = self.val_imgs[:num_samples]
+        self.val_labels = self.val_labels[:num_samples]
+        self.title = title
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+
+        classes = [""]
+        domains = [""]
+        val_imgs = self.val_imgs.to(device=pl_module.device)
+        class_pred_logit, domain_pred = pl_module(val_imgs)
+        class_pred_prob = torch.sigmoid(class_pred_logit)
+        domain_pred = torch.argmax(domain_pred, dim=1)
+        trainer.logger.experiment.log({
+            self.title : [
+                wandb.Image(x, caption=f"Preds: {round(pred.item(), 3)} | {domains[domain]}\nLabel: {classes[y]}")
+                    for x, pred, domain, y in zip(val_imgs, class_pred_prob, domain_pred, self.val_labels)
+            ],
+        })
+
 def get_transform(transformation):
     return transforms.Compose([
         transforms.Resize(transformation['img_size']),
+        transforms.Grayscale(num_output_channels=3),
         transforms.ToTensor(),
-        transforms.Normalize(transformation['mean'], transformation['std'])
+        transforms.Normalize(transformation['mean'], transformation['std']),
     ])
 
 def get_train_val_src(cfg):
@@ -35,7 +61,8 @@ def get_train_tgts(cfg):
             #TODO
             # train_sets.append(train_set_tgt)
             pass
-    return train_set, None
+
+    return train_sets
 
 def get_test_tgts(cfg):
     test_sets = []

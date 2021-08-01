@@ -3,9 +3,9 @@ input:
     src: "MNIST"
     tgts: ["MNISTM"]
     transformation :
-        img_size: 512 # size of input if images input
-        mean_normalization: [0.485, 0.456, 0.406] # mean used for normalization (from resnet34)
-        std_normalization: [0.229, 0.224, 0.225] # std used for normalization (from resnet34)
+        img_size: 28 # size of input if images input
+        mean: [0.485, 0.456, 0.406] # mean used for normalization (from resnet34)
+        std: [0.229, 0.224, 0.225] # std used for normalization (from resnet34)
 
 model:
   type : DANN
@@ -32,4 +32,4 @@ seed: 8888
 
 output:
   save: true
-  save_path : ""
+  save_path : "/Users/martinmarvin/Desktop/GitHub/"

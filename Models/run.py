@@ -66,7 +66,7 @@ class Runner:
 
             # Setup Experiment names
             experiment_root_dir = self.cfg['output']['save_path']
-            dataset_name = self.cfg['input']['dataset']['name']
+            dataset_name = self.cfg['input']['dataset']['src']
             run_name = f"{self.cfg['model']['type']}_{self.id}"
             self.exeriment_name = f'{self.model_type}_{dataset_name}_{self.id}'
             self.experiment_folder =  os.path.join(experiment_root_dir, self.exeriment_name, '')
@@ -82,7 +82,10 @@ class Runner:
             # Copy config file in the Experiment folder
             copyfile(configfile_path, os.path.join(self.experiment_folder, os.path.basename(os.path.normpath(configfile_path))))
             # Copy model code folder in the Experiment folder (ingnore wandb)
-            copytree('MADA-PL/Models/', os.path.join(self.experiment_folder, 'model'), ignore=ignore_patterns('wandb'))
+
+            source_path = os.getcwd()
+            assert('MADA-PL/Models' in source_path),  "Please run run.py from MADA-PL/Models"
+            copytree(source_path, os.path.join(self.experiment_folder, 'model'), ignore=ignore_patterns('wandb'))
 
 
             # Wandb setup
