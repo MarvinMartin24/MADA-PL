@@ -69,6 +69,7 @@ class MNISTM(data.Dataset):
             return len(self.test_data)
 
     def _check_exists(self):
+        print(os.path.join(self.root, self.processed_folder, self.training_file), os.path.join(self.root, self.processed_folder, self.test_file))
         return os.path.exists(os.path.join(self.root, self.processed_folder, self.training_file)) and os.path.exists(
             os.path.join(self.root, self.processed_folder, self.test_file)
         )
@@ -87,8 +88,8 @@ class MNISTM(data.Dataset):
 
         # make data dirs
         try:
-            os.makedirs(os.path.join(self.root, self.raw_folder))
-            os.makedirs(os.path.join(self.root, self.processed_folder))
+            os.makedirs(os.path.join(self.root, self.raw_folder, ''))
+            os.makedirs(os.path.join(self.root, self.processed_folder, ''))
         except OSError as e:
             if e.errno == errno.EEXIST:
                 pass

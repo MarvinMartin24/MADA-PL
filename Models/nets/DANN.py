@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
+from collections import OrderedDict
 import wandb
 import os
 
@@ -20,7 +21,7 @@ class DANN(pl.LightningModule):
         if mode == 'Train':
 
           self.len_dataloader = dataModule.len_dataloader
-          self.criterion_classif = nn.BCEWithLogitsLoss()
+          self.criterion_classif = nn.CrossEntropyLoss()
           self.criterion_domain = F.cross_entropy
 
           # log hyperparameters
@@ -45,7 +46,6 @@ class DANN(pl.LightningModule):
 
         self.class_classifier = nn.Sequential(
                                     OrderedDict([
-                                        ('dr1', nn.Dropout(0.5)),
                                         ('d1', nn.Linear(in_features, 2048)),
                                         ('bn1', nn.BatchNorm1d(2048)),
                                         ('relu1', nn.ReLU()),
@@ -63,9 +63,10 @@ class DANN(pl.LightningModule):
 
     def forward(self, x):
         lbda = self.get_lambda_p(self.get_p()) if self.mode == 'Train' else 0
-        pool_features = self.backbone(x)
-        reverse_features = GRL.apply(pool_features, lbda)
-        class_pred = self.class_classifier(pool_features)
+        features = self.backbone(x)
+        features = features.reshape(features.size(0), -1)
+        reverse_features = GRL.apply(features, lbda)
+        class_pred = self.class_classifier(features)
         domain_pred = self.domain_classifier(reverse_features)
         return class_pred, domain_pred
 
@@ -81,7 +82,7 @@ class DANN(pl.LightningModule):
         # on source domain
         class_src_pred , domain_src_pred = self(xs)
 
-        loss_classif_src = self.criterion_classif(class_src_pred, ys.unsqueeze(1).float())
+        loss_classif_src = self.criterion_classif(class_src_pred, ys)
         loss_domain_src = self.criterion_domain(domain_src_pred, ys_domain)
 
         # on target domain
@@ -91,8 +92,9 @@ class DANN(pl.LightningModule):
         # Aggregate loss
         loss_domain = loss_domain_src + loss_domain_tgt
         loss_tot =  loss_classif_src + loss_domain
-
-        self.train_accuracy_classif(torch.sigmoid(class_src_pred), ys.unsqueeze(1))
+        
+        
+        self.train_accuracy_classif(F.softmax(class_src_pred, dim=1), ys)
         self.train_accuracy_domain_src(torch.argmax(domain_src_pred, dim=1), ys_domain)
         self.train_accuracy_domain_tgt(torch.argmax(domain_tgt_pred, dim=1), yt_domain)
 
@@ -118,8 +120,8 @@ class DANN(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         xs, ys = batch
         class_src_pred, _ = self(xs)
-        loss = self.criterion_classif(class_src_pred, ys.unsqueeze(1).float())
-        return { 'loss': loss, 'logits': class_src_pred, 'preds': torch.sigmoid(class_src_pred), 'targets': ys.unsqueeze(1)}
+        loss = self.criterion_classif(class_src_pred, ys)
+        return { 'loss': loss, 'logits': class_src_pred, 'preds': F.softmax(class_src_pred, dim=1), 'targets': ys}
 
     def validation_step_end(self, outs):
         self.val_accuracy_classif(outs["preds"], outs["targets"])
@@ -138,8 +140,8 @@ class DANN(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         xs, ys = batch
         class_src_pred, _ = self(xs)
-        loss = self.criterion_classif(class_src_pred, ys.unsqueeze(1).float())
-        return { 'loss': loss, 'logits': class_src_pred, 'preds': torch.sigmoid(class_src_pred), 'targets': ys.unsqueeze(1)}
+        loss = self.criterion_classif(class_src_pred, ys)
+        return { 'loss': loss, 'logits': class_src_pred, 'preds': F.softmax(class_src_pred, dim=1), 'targets': ys}
 
     def test_step_end(self, outs):
         self.test_accuracy_classif(outs["preds"], outs["targets"])

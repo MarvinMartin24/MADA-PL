@@ -136,8 +136,8 @@ class Runner:
         samples_val_iter = iter(self.dataModule.val_dataloader()) # Source Data
         samples_test_iter = iter(self.dataModule.test_dataloader())
         callbacks = [checkpoint_callback,
-                    ImagePredictionLogger(samples_val_iter, title="Val_Preds"),
-                    ImagePredictionLogger(samples_test_iter,  title="Test_Preds")]
+                    ImagePredictionLogger(self.dataModule, next(samples_val_iter), title="Val_Preds"),
+                    ImagePredictionLogger(self.dataModule, next(samples_test_iter)[0],  title="Test_Preds")]
 
         if self.model_type == "DANN":
             self.net = DANN(self.cfg,

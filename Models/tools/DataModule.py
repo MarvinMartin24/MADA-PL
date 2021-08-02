@@ -30,6 +30,8 @@ class DataModule(pl.LightningDataModule):
 
         # Load Train/Val of the Source (train_set_src and val_set_src)
         self.train_set_src, self.val_set_src = get_train_val_src(self.cfg)
+        self.classes = self.train_set_src.dataset.classes
+        self.num_classes =len(self.train_set_src.dataset.classes)
 
 
         # Load Train of the Targets (not val because we only evaluate the class classifier but not the domain classifiers)

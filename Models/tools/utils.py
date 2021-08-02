@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import torchvision
+import torch.nn.functional as F
 import pytorch_lightning as pl
 import wandb
 from torchvision import transforms
@@ -8,20 +9,21 @@ from torchvision import transforms
 from tools.MNISTM import MNISTM
 
 class ImagePredictionLogger(pl.Callback):
-    def __init__(self, val_samples, title, num_samples=32):
+    def __init__(self, dataModule, val_samples, title, num_samples=32):
         super().__init__()
-        self.val_imgs, self.val_labels = next(val_samples)
+        self.dataModule = dataModule
+        self.val_imgs, self.val_labels = val_samples
         self.val_imgs = self.val_imgs[:num_samples]
         self.val_labels = self.val_labels[:num_samples]
         self.title = title
 
     def on_validation_epoch_end(self, trainer, pl_module):
 
-        classes = [""]
-        domains = [""]
+        classes = self.dataModule.classes
+        domains = ["MNIST", "MNISTM"]
         val_imgs = self.val_imgs.to(device=pl_module.device)
         class_pred_logit, domain_pred = pl_module(val_imgs)
-        class_pred_prob = torch.sigmoid(class_pred_logit)
+        class_pred_prob = torch.argmax(F.softmax(class_pred_logit, dim=1), dim=1)
         domain_pred = torch.argmax(domain_pred, dim=1)
         trainer.logger.experiment.log({
             self.title : [

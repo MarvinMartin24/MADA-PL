@@ -32,4 +32,4 @@ seed: 8888
 
 output:
   save: true
-  save_path : "/Users/martinmarvin/Desktop/GitHub/"
+  save_path : "/home/user/Documents/Experiments/"
