@@ -1,7 +1,7 @@
 input:
   dataset:
-    src: "MNIST"
-    tgts: ["MNISTM"]
+    src: "AMAZON"
+    tgts: ["DSLR"]
     transformation :
         img_size: 28 # size of input if images input
         mean: [0.485, 0.456, 0.406] # mean used for normalization (from resnet34)
@@ -32,4 +32,4 @@ seed: 8888
 
 output:
   save: true
-  save_path : "/home/user/Documents/Experiments/"
+  save_path : "/home/anirudh/DL/"

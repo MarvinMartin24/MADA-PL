@@ -5,9 +5,14 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 import wandb
 from torchvision import transforms
-
 from tools.MNISTM import MNISTM
-
+import requests
+from pathlib import Path
+import shutil
+import os
+from torchvision.datasets import ImageFolder
+from office31 import office31
+import datasetops as do
 class ImagePredictionLogger(pl.Callback):
     def __init__(self, dataModule, val_samples, title, num_samples=32):
         super().__init__()
@@ -39,49 +44,138 @@ def get_transform(transformation):
         transforms.ToTensor(),
         transforms.Normalize(transformation['mean'], transformation['std']),
     ])
+"""
+def download_file_from_google_drive(id, destination):
+    URL = "https://docs.google.com/uc?export=download"
 
-def get_train_val_src(cfg):
+    session = requests.Session()
+
+    response = session.get(URL, params={"id": id}, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {"id": id, "confirm": token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith("download_warning"):
+            return value
+
+    return None
+
+
+def save_response_content(response, destination):
+    CHUNK_SIZE = 200000
+
+    print("Downloading")
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)
+
+
+def download_and_extract_office31(cfg):
+
+    if os.path.isdir(os.path.join(cfg['output']['save_path'], 'office31')):
+        return "Done"
+
+
+    download_file_from_google_drive(
+        id="0B4IapRTv9pJ1WGZVd1VDMmhwdlE", destination=str(os.path.join(cfg['output']['save_path'], 'office31'))
+    )
+
+    target_path.mkdir(parents=True, exist_ok=True)
+
+    print("Unpacking")
+    shutil.unpack_archive(str(cfg['output']['save_path']), target_path)
+
+    print("Cleaning up")
+    #tmp_path.unlink()
+
+    print("Done")
+
+ """
+def download_and_extract_office31(cfg):
+     office31(
+        source_name = "dslr",
+        target_name = "amazon",
+        seed=cfg['seed'],
+        same_to_diff_class_ratio=3,
+        image_resize=(cfg['input']['dataset']['transformation']['img_size'], cfg['input']['dataset']['transformation']['img_size']),
+        group_in_out=True, # groups data: ((img_s, img_t), (lbl_s, _lbl_t))
+        framework_conversion="pytorch",
+        office_path = str(os.path.join(cfg['output']['save_path'], "office31")) #automatically downloads to "~/data"
+    )   
+
+def get_train_val_test_src(cfg):
+    print(cfg['input']['dataset']['src'])
     if cfg['input']['dataset']['src'] == "MNIST":
         transform_mnist_train = get_transform(cfg["input"]["dataset"]['transformation'])
         dataset = torchvision.datasets.MNIST(root=cfg['output']['save_path'], train=True, download=True, transform=transform_mnist_train)
         train_set, val_set = torch.utils.data.random_split(dataset, [50000, 10000])
-    else:
-        #train_set, val_set = #TODO
-        pass
-    return train_set, val_set
+        test_set = torchvision.datasets.MNIST(root=cfg['output']['save_path'], train=False, download=True, transform=transform_mnist_train)
+    
+    elif cfg['input']['dataset']['src'] == "AMAZON":
+        transform_amazon_train = get_transform(cfg["input"]["dataset"]["transformation"])
+        dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/amazon/images'), transform=transform_amazon_train)
+        train_set, val_set, test_set = torch.utils.data.random_split(dataset, [2253, 282, 282]) 
 
-def get_train_tgts(cfg):
+    
+    elif cfg['input']['dataset']['src'] == "WEBCAM":
+        transform_webcam_train = get_transform(cfg["input"]["dataset"]["transformation"])
+        dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/webcam/images'), transform=transform_webcam_train)
+        train_set, val_set, test_set = torch.utils.data.random_split(dataset, [635, 80, 80])
+
+    elif cfg['input']['dataset']['src'] == "DSLR":
+        transform_dslr_train = get_transform(cfg["input"]["dataset"]["transformation"])
+        dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/dslr/images'), transform=transform_dslr_train)
+        train_set, val_set, test_set = torch.utils.data.random_split(dataset, [398, 50, 50])
+
+
+    else:
+        print('Source dataset name does not exist')
+    return train_set, val_set, test_set
+
+def get_train_test_tgts(cfg):
     train_sets = []
+    test_sets = []
     for tgt in cfg['input']['dataset']['tgts']:
+        print(tgt)
         if tgt == "MNISTM":
             transform_mnistm_train = get_transform(cfg["input"]["dataset"]['transformation'])
             dataset = MNISTM(root=cfg['output']['save_path'], train=True, download=True, transform=transform_mnistm_train)
             train_set_tgt, _ = torch.utils.data.random_split(dataset, [50000, 10000])
-            train_sets.append(train_set_tgt)
-
-        else:
-            #TODO
-            # train_sets.append(train_set_tgt)
-            pass
-
-    return train_sets
-
-def get_test_tgts(cfg):
-    test_sets = []
-    for tgt in cfg['input']['dataset']['tgts']:
-
-        if tgt == "MNIST":
-            transform_mnist_train = get_transform(cfg["input"]["dataset"]['transformation'])
-            test_set_tgt = torchvision.datasets.MNIST(root=cfg['output']['save_path'], train=False, download=True, transform=transform_mnist_train)
-            test_sets.append(test_set_tgt)
-
-        if tgt == "MNISTM":
-            transform_mnistm_train = get_transform(cfg["input"]["dataset"]['transformation'])
             test_set_tgt = MNISTM(root=cfg['output']['save_path'], train=False, download=True, transform=transform_mnistm_train)
+            train_sets.append(train_set_tgt)
+            test_sets.append(test_set_tgt)
+        elif tgt == "AMAZON":
+            transform_amazon_train = get_transform(cfg["input"]["dataset"]['transformation'])
+            dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/amazon/images'), transform=transform_amazon_train)
+            train_set_tgt, test_set_tgt = torch.utils.data.random_split(dataset, [2535, 282])
+            train_sets.append(train_set_tgt)
+            test_sets.append(test_set_tgt)
+        elif tgt == "DSLR":
+            transform_dslr_train = get_transform(cfg["input"]["dataset"]['transformation'])
+            dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/dslr/images'), transform=transform_dslr_train)
+            train_set_tgt, test_set_tgt = torch.utils.data.random_split(dataset, [448, 50])
+            train_sets.append(train_set_tgt)
+            test_sets.append(test_set_tgt)
+        elif tgt == "WEBCAM":
+            transform_webcam_train = get_transform(cfg["input"]["dataset"]['transformation'])
+            dataset = ImageFolder(root=(cfg['output']['save_path'],'office31/webcam/images'), transform=transform_webcam_train)
+            train_set_tgt, test_set_tgt = torch.utils.data.random_split(dataset, [715, 80])
+            train_sets.append(train_set_tgt)
             test_sets.append(test_set_tgt)
 
+
+
         else:
-            #TODO
-            #train_sets.append(train_set_tgt)
-            pass
-    return test_sets
+            raise Exception("Target dataset name does not exist")
+
+
+    return train_sets, test_sets
+

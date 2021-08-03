@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.datasets as dset
 
-from tools.utils import get_train_val_src, get_train_tgts, get_test_tgts
+from tools.utils import get_train_val_test_src, get_train_test_tgts, download_and_extract_office31
 
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -27,22 +27,22 @@ class DataModule(pl.LightningDataModule):
         self.cfg = cfg
 
     def setup(self):
+        download_and_extract_office31(self.cfg)
+
 
         # Load Train/Val of the Source (train_set_src and val_set_src)
-        self.train_set_src, self.val_set_src = get_train_val_src(self.cfg)
+        self.train_set_src, self.val_set_src, self.test_set_src = get_train_val_test_src(self.cfg)
         self.classes = self.train_set_src.dataset.classes
         self.num_classes =len(self.train_set_src.dataset.classes)
 
 
         # Load Train of the Targets (not val because we only evaluate the class classifier but not the domain classifiers)
-        self.train_set_tgts = get_train_tgts(self.cfg) # is a list of torch Datasets
+        self.train_set_tgts, self.test_set_tgts = get_train_test_tgts(self.cfg) # is a list of torch Datasets
 
         # Get the size of the dataloader for the loss later
         min_len_dataloader_tgts = min([len(tgt.dataset) for tgt in self.train_set_tgts])
         self.len_dataloader = min(len(self.train_set_src), min_len_dataloader_tgts)
 
-        # Load Test (should be from one of the Target distribution)
-        self.test_set_tgts = get_test_tgts(self.cfg) # is a list of torch Datasets
 
     def train_dataloader(self):
         concat_dataset = ConcatDataset(
