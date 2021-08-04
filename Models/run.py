@@ -82,24 +82,12 @@ class Runner:
             # Copy config file in the Experiment folder
             copyfile(configfile_path, os.path.join(self.experiment_folder, os.path.basename(os.path.normpath(configfile_path))))
             # Copy model code folder in the Experiment folder (ingnore wandb)
-
-            source_path = os.getcwd()
-            assert('MADA-PL/Models' in source_path),  "Please run run.py from MADA-PL/Models"
-            copytree(source_path, os.path.join(self.experiment_folder, 'model'), ignore=ignore_patterns('wandb'))
-
+            assert('MADA-PL/Models' in os.getcwd()),  "Please run run.py from MADA-PL/Models"
+            copytree(os.getcwd(), os.path.join(self.experiment_folder, 'Models'), ignore=ignore_patterns('wandb'))
 
             # Wandb setup
             wandb.login()
             wandb.init(project="MADA-PL", name=run_name)
-
-            # Copy in Artifact the model code source
-            code = wandb.Artifact('project-source', type='code')
-            for path in glob.glob('**/*.py', recursive=True):
-                # SharkDetector already upladed automatically in init()
-                if not 'run.py' in path:
-                    code.add_file(path)
-            wandb.run.use_artifact(code)
-
 
     def inference_predict(self, path_img):
         # check image path exists
@@ -124,9 +112,9 @@ class Runner:
 
         print(f"\n######### {self.experiment_folder} #########\n")
 
-        checkpoint_callback = ModelCheckpoint(monitor='Val/loss_step',
+        checkpoint_callback = ModelCheckpoint(monitor='Val/loss_src_step',
                                               dirpath=self.experiment_folder,
-                                              filename= self.exeriment_name + '_epoch{epoch:02d}-val_loss_step{Val/loss_step:.2f}',
+                                              filename= self.exeriment_name + '_epoch{epoch:02d}-val_loss_src_step{Val/loss_src_step:.2f}',
                                               auto_insert_metric_name=False,
                                               save_top_k=3,
                                               mode='min')
@@ -137,7 +125,7 @@ class Runner:
         samples_test_iter = iter(self.dataModule.test_dataloader())
         callbacks = [checkpoint_callback,
                     ImagePredictionLogger(self.dataModule, next(samples_val_iter), title="Val_Preds"),
-                    ImagePredictionLogger(self.dataModule, next(samples_test_iter)[0],  title="Test_Preds")]
+                    ImagePredictionLogger(self.dataModule, next(samples_test_iter),  title="Test_Preds")]
 
         if self.model_type == "DANN":
             self.net = DANN(self.cfg,
@@ -150,13 +138,12 @@ class Runner:
                             dataModule=self.dataModule)
 
 
-        wandb_logger = WandbLogger(project= "MADA-PL",
-                                   name=f"{self.model_type}_{self.id}")
+        wandb_logger = WandbLogger(project= "MADA-PL", name=f"{self.model_type}_{self.id}")
 
 
         self.trainer = pl.Trainer(
                         deterministic=True,
-                        val_check_interval=0.25,
+                        #val_check_interval=0.25,
                         gpus=self.cfg['training']['gpus'],
                         logger=wandb_logger,
                         log_every_n_steps=10,
@@ -169,10 +156,9 @@ class Runner:
 
         if self.cfg['output']['save']:
             for exp_path in os.listdir(self.experiment_folder):
-                if exp_path != 'model':
-                    file_path =  os.path.join(self.experiment_folder, exp_path)
-                    print("Saving to Wanbd: " + exp_path)
-                    wandb.save(os.path.join(wandb.run.dir, file_path))
+                file_path =  os.path.join(self.experiment_folder, exp_path)
+                print("Saving to Wanbd: " + exp_path)
+                wandb.save(os.path.join(wandb.run.dir, file_path))
 
             ## just in case save last
             model_filename_pth = os.path.join(self.experiment_folder, f"{self.exeriment_name}_last_last.ckpt")

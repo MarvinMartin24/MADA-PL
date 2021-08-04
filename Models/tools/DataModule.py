@@ -27,13 +27,21 @@ class DataModule(pl.LightningDataModule):
         self.cfg = cfg
 
     def setup(self):
-        download_and_extract_office31(self.cfg)
+        
+        if self.cfg['input']['dataset']['src'] in ['AMAZON', 'DSLR', 'WEBCAM']:
+            print("Downloading Office31 Dataset...")
+            download_and_extract_office31(self.cfg)
 
 
         # Load Train/Val of the Source (train_set_src and val_set_src)
         self.train_set_src, self.val_set_src, self.test_set_src = get_train_val_test_src(self.cfg)
+        
         self.classes = self.train_set_src.dataset.classes
+        self.domains = [self.cfg['input']['dataset']['src']] + self.cfg['input']['dataset']['tgts']
         self.num_classes =len(self.train_set_src.dataset.classes)
+        self.num_domains = len(self.domains)
+        
+        print(f"CLASSES:{self.classes}, DOMAINS:{self.domains}")
 
 
         # Load Train of the Targets (not val because we only evaluate the class classifier but not the domain classifiers)
@@ -68,7 +76,11 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.cfg["training"]["num_workers"])
 
     def test_dataloader(self):
-        concat_test_set = ConcatDataset(*self.test_set_tgts)
+        concat_test_set = ConcatDataset(
+            self.test_set_src,
+            *self.test_set_tgts
+        )
+        
         return DataLoader(
             concat_test_set,
             shuffle=False,

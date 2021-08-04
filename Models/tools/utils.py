@@ -12,93 +12,62 @@ import shutil
 import os
 from torchvision.datasets import ImageFolder
 from office31 import office31
-import datasetops as do
-class ImagePredictionLogger(pl.Callback):
-    def __init__(self, dataModule, val_samples, title, num_samples=32):
-        super().__init__()
-        self.dataModule = dataModule
-        self.val_imgs, self.val_labels = val_samples
-        self.val_imgs = self.val_imgs[:num_samples]
-        self.val_labels = self.val_labels[:num_samples]
-        self.title = title
-
-    def on_validation_epoch_end(self, trainer, pl_module):
-
-        classes = self.dataModule.classes
-        domains = ["MNIST", "MNISTM"]
-        val_imgs = self.val_imgs.to(device=pl_module.device)
-        class_pred_logit, domain_pred = pl_module(val_imgs)
-        class_pred_prob = torch.argmax(F.softmax(class_pred_logit, dim=1), dim=1)
-        domain_pred = torch.argmax(domain_pred, dim=1)
-        trainer.logger.experiment.log({
-            self.title : [
-                wandb.Image(x, caption=f"Preds: {round(pred.item(), 3)} | {domains[domain]}\nLabel: {classes[y]}")
-                    for x, pred, domain, y in zip(val_imgs, class_pred_prob, domain_pred, self.val_labels)
-            ],
-        })
 
 def get_transform(transformation):
+    """
+    return the given transformer
+    :param transformation: list of parameters for transformation, image size, mean, ...
+    :param phase: 'train','val' or 'test' to select the good transform
+    :return: Transform Compose chain
+    """
+    if transformation['name'] == 'transform_GS_DA':
+        return transform_GS(transformation)
+    if transformation['name'] == 'transform_RGB_DA':
+        return transform_RGB(transformation)
+    if transformation['name'] == 'transform_GS':
+        return transform_GS(transformation)
+    if transformation['name'] == 'transform_RGB':
+        return transform_RGB(transformation)
+
+    raise Exception('Name of transforms given in config not correct')
+
+def transform_GS_DA(transformation):
+    return transforms.Compose([
+        transforms.Resize(transformation['img_size']),
+        transforms.Grayscale(num_output_channels=3),
+        transforms.RandomHorizontalFlip(0.3),
+        transforms.RandomRotation(0.3),
+        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
+        transforms.ToTensor(),
+        transforms.Normalize(transformation['mean'], transformation['std']),
+    ])
+
+def transform_GS(transformation):
     return transforms.Compose([
         transforms.Resize(transformation['img_size']),
         transforms.Grayscale(num_output_channels=3),
         transforms.ToTensor(),
         transforms.Normalize(transformation['mean'], transformation['std']),
     ])
-"""
-def download_file_from_google_drive(id, destination):
-    URL = "https://docs.google.com/uc?export=download"
 
-    session = requests.Session()
+def transform_RGB_DA(transformation):
+    return transforms.Compose([
+        transforms.Resize(transformation['img_size']),
+        transforms.Grayscale(num_output_channels=3),
+        transforms.RandomHorizontalFlip(0.3),
+        transforms.RandomRotation(0.3),
+        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
+        transforms.ToTensor(),
+        transforms.Normalize(transformation['mean'], transformation['std']),
+    ])
 
-    response = session.get(URL, params={"id": id}, stream=True)
-    token = get_confirm_token(response)
+def transform_RGB(transformation):
+    return transforms.Compose([
+        transforms.Resize(transformation['img_size']),
+        transforms.ToTensor(),
+        transforms.Normalize(transformation['mean'], transformation['std']),
+    ])
 
-    if token:
-        params = {"id": id, "confirm": token}
-        response = session.get(URL, params=params, stream=True)
-
-    save_response_content(response, destination)
-
-
-def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith("download_warning"):
-            return value
-
-    return None
-
-
-def save_response_content(response, destination):
-    CHUNK_SIZE = 200000
-
-    print("Downloading")
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
-            if chunk:  # filter out keep-alive new chunks
-                f.write(chunk)
-
-
-def download_and_extract_office31(cfg):
-
-    if os.path.isdir(os.path.join(cfg['output']['save_path'], 'office31')):
-        return "Done"
-
-
-    download_file_from_google_drive(
-        id="0B4IapRTv9pJ1WGZVd1VDMmhwdlE", destination=str(os.path.join(cfg['output']['save_path'], 'office31'))
-    )
-
-    target_path.mkdir(parents=True, exist_ok=True)
-
-    print("Unpacking")
-    shutil.unpack_archive(str(cfg['output']['save_path']), target_path)
-
-    print("Cleaning up")
-    #tmp_path.unlink()
-
-    print("Done")
-
- """
 def download_and_extract_office31(cfg):
      office31(
         source_name = "dslr",
@@ -106,13 +75,13 @@ def download_and_extract_office31(cfg):
         seed=cfg['seed'],
         same_to_diff_class_ratio=3,
         image_resize=(cfg['input']['dataset']['transformation']['img_size'], cfg['input']['dataset']['transformation']['img_size']),
-        group_in_out=True, # groups data: ((img_s, img_t), (lbl_s, _lbl_t))
+        group_in_out=True,
         framework_conversion="pytorch",
         office_path = str(os.path.join(cfg['output']['save_path'], "office31")) #automatically downloads to "~/data"
     )   
 
 def get_train_val_test_src(cfg):
-    print(cfg['input']['dataset']['src'])
+   
     if cfg['input']['dataset']['src'] == "MNIST":
         transform_mnist_train = get_transform(cfg["input"]["dataset"]['transformation'])
         dataset = torchvision.datasets.MNIST(root=cfg['output']['save_path'], train=True, download=True, transform=transform_mnist_train)
@@ -137,14 +106,14 @@ def get_train_val_test_src(cfg):
 
 
     else:
-        print('Source dataset name does not exist')
+        raise Exception('Source dataset name does not exist')
     return train_set, val_set, test_set
 
 def get_train_test_tgts(cfg):
     train_sets = []
     test_sets = []
     for tgt in cfg['input']['dataset']['tgts']:
-        print(tgt)
+        
         if tgt == "MNISTM":
             transform_mnistm_train = get_transform(cfg["input"]["dataset"]['transformation'])
             dataset = MNISTM(root=cfg['output']['save_path'], train=True, download=True, transform=transform_mnistm_train)
@@ -171,11 +140,53 @@ def get_train_test_tgts(cfg):
             train_sets.append(train_set_tgt)
             test_sets.append(test_set_tgt)
 
-
-
         else:
             raise Exception("Target dataset name does not exist")
 
-
     return train_sets, test_sets
 
+
+class ImagePredictionLogger(pl.Callback):
+    
+    def __init__(self, dataModule, val_samples, title, num_samples=32):
+        super().__init__()
+        self.dataModule = dataModule
+        self.title = title
+        
+        if self.title == "Test_Preds":
+            (self.xs, self.ys), (self.xt, self.yt) = val_samples
+            self.xt = self.xt[:num_samples]
+            self.yt = self.yt[:num_samples]
+            
+        elif self.title == "Val_Preds":
+            self.xs, self.ys = val_samples
+            
+        self.xs = self.xs[:num_samples]
+        self.ys = self.ys[:num_samples]
+        
+    def on_validation_epoch_end(self, trainer, pl_module):
+
+        classes = self.dataModule.classes
+        domains = self.dataModule.domains
+        
+        self.xs = self.xs.to(device=pl_module.device)
+        
+        class_logit_src, domain_logit_src = pl_module(self.xs)
+        class_pred_src = torch.argmax(F.softmax(class_logit_src, dim=1), dim=1)
+        domain_pred_src = torch.argmax(domain_logit_src, dim=1)
+        
+        trainer.logger.experiment.log({
+            f"{self.title}_src" : [wandb.Image(x, caption=f"Pc(xs): {classes[p]} | Pd(xs):{domains[d]}\nys: {classes[y]}")
+                    for x, p, d, y in zip(self.xs, class_pred_src, domain_pred_src, self.ys)],
+        })
+
+        if self.title == "Test_Preds":
+            self.xt = self.xt.to(device=pl_module.device)
+            class_logit_tgt, domain_logit_tgt = pl_module(self.xt)
+            class_pred_tgt = torch.argmax(F.softmax(class_logit_tgt, dim=1), dim=1)
+            domain_pred_tgt = torch.argmax(domain_logit_tgt, dim=1)
+            
+            trainer.logger.experiment.log({
+            f"{self.title}_tqt" : [wandb.Image(x, caption=f"Pc(xt): {classes[p]} | Pd(xt):{domains[d]}\nyt: {classes[y]}")
+                    for x, p, d, y in zip(self.xt, class_pred_tgt, domain_pred_tgt, self.yt)],
+            })

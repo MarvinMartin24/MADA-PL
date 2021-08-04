@@ -69,10 +69,8 @@ class MNISTM(data.Dataset):
             return len(self.test_data)
 
     def _check_exists(self):
-        print(os.path.join(self.root, self.processed_folder, self.training_file), os.path.join(self.root, self.processed_folder, self.test_file))
         return os.path.exists(os.path.join(self.root, self.processed_folder, self.training_file)) and os.path.exists(
-            os.path.join(self.root, self.processed_folder, self.test_file)
-        )
+            os.path.join(self.root, self.processed_folder, self.test_file))
 
     def download(self):
         """Download the MNIST data."""
