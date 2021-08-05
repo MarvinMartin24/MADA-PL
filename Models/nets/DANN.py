@@ -8,7 +8,7 @@ import wandb
 import os
 
 from nets.GRL import GRL
-from nets.backbones import load_backbone
+from nets.loader import load_backbone, load_classifier
 
 
 class DANN(pl.LightningModule):
@@ -46,22 +46,13 @@ class DANN(pl.LightningModule):
         #for n, p in self.named_parameters():
             #print('{} {}'.format(n, p.requires_grad))
 
-        self.class_classifier = nn.Sequential(
-                                    OrderedDict([
-                                        ('d1', nn.Linear(in_features, 2048)),
-                                        ('bn1', nn.BatchNorm1d(2048)),
-                                        ('relu1', nn.ReLU()),
-                                        ('dr2', nn.Dropout(0.5)),
-                                        ('d2', nn.Linear(2048, dataModule.num_classes))
-                                    ]))
+        self.class_classifier = load_classifier(name=cfg['model']['class_classifier'], 
+                                                input_size=in_features, 
+                                                output_size=dataModule.num_classes)
 
-        self.domain_classifier = nn.Sequential(
-                                    OrderedDict([
-                                        ('d1', nn.Linear(in_features, 100)),
-                                        ('bn1',nn.BatchNorm1d(100)),
-                                        ('relu1',nn.ReLU(True)),
-                                        ('d2',nn.Linear(100, 2))
-                                    ]))
+        self.domain_classifier = load_classifier(name=cfg['model']['domain_classifier'], 
+                                                input_size=in_features, 
+                                                output_size=2)
 
     def forward(self, x):
         lbda = self.get_lambda_p(self.get_p()) if self.mode == 'Train' else 0
