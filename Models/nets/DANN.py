@@ -98,7 +98,7 @@ class DANN(pl.LightningModule):
         self.log("Train/loss_class_src", loss_class_src, prog_bar=True)
         self.log("Train/acc_class_src", self.train_accuracy_class, prog_bar=True)
         self.log("Train/acc_domain_src", self.train_accuracy_domain_src, prog_bar=True)
-        self.log("Train/acc_domain_tqt", self.train_accuracy_domain_tgt, prog_bar=True)
+        self.log("Train/acc_domain_tgt", self.train_accuracy_domain_tgt, prog_bar=True)
         self.log("Train/loss_domains", loss_domains)
         return {"loss": loss_tot}
 
@@ -124,27 +124,27 @@ class DANN(pl.LightningModule):
         loss_src = self.criterion_class(class_logit_src, ys)
         
         # Test Target
-        class_logit_tqt, _ = self(xt)
-        class_pred_tqt = F.softmax(class_logit_tqt, dim=1)
-        loss_tqt = self.criterion_class(class_logit_tqt, yt)
+        class_logit_tgt, _ = self(xt)
+        class_pred_tgt = F.softmax(class_logit_tgt, dim=1)
+        loss_tgt = self.criterion_class(class_logit_tgt, yt)
         
         return {'loss_src': loss_src, 
-                'loss_tqt': loss_tqt,
+                'loss_tgt': loss_tgt,
                 'logits_src': class_logit_src, 
-                'logits_tqt': class_logit_tqt, 
+                'logits_tgt': class_logit_tgt, 
                 'preds_src': class_pred_src, 
-                'preds_tqt': class_pred_tqt,
+                'preds_tgt': class_pred_tgt,
                 'labels_src': ys,
-                'labels_tqt': yt}
+                'labels_tgt': yt}
 
     def test_step_end(self, outs):
         self.test_accuracy_class_src(outs["preds_src"], outs["labels_src"])
-        self.test_accuracy_class_tgt(outs["preds_tqt"], outs["labels_tqt"])
+        self.test_accuracy_class_tgt(outs["preds_tgt"], outs["labels_tgt"])
 
         self.log("Test/acc_src_step", self.test_accuracy_class_src)
         self.log("Test/acc_tgt_step", self.test_accuracy_class_tgt)
         self.log("Test/loss_src_step", outs['loss_src'])
-        self.log("Test/loss_tqt_step", outs['loss_tqt'])
+        self.log("Test/loss_tgt_step", outs['loss_tgt'])
 
     def configure_optimizers(self):
         model_parameter = [

@@ -82,7 +82,8 @@ class Runner:
             # Copy config file in the Experiment folder
             copyfile(configfile_path, os.path.join(self.experiment_folder, os.path.basename(os.path.normpath(configfile_path))))
             # Copy model code folder in the Experiment folder (ingnore wandb)
-            assert('MADA-PL/Models' in os.getcwd()),  "Please run run.py from MADA-PL/Models"
+            
+            assert('Models' in os.getcwd()),  "Please run run.py from MADA-PL/Models"
             copytree(os.getcwd(), os.path.join(self.experiment_folder, 'Models'), ignore=ignore_patterns('wandb'))
 
             # Wandb setup
@@ -174,7 +175,7 @@ class Runner:
 
 if __name__ == '__main__':
 
-    runner = Runner(mode='Train', configfile_path="config.yml")
+    runner = Runner(mode='Train', configfile_path="config_MADA.yml")
     runner.train()
     runner.test()
 

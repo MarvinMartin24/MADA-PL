@@ -185,20 +185,33 @@ class ImagePredictionLogger(pl.Callback):
         
         class_logit_src, domain_logit_src = pl_module(self.xs)
         class_pred_src = torch.argmax(F.softmax(class_logit_src, dim=1), dim=1)
-        domain_pred_src = torch.argmax(domain_logit_src, dim=1)
-        
-        trainer.logger.experiment.log({
-            f"{self.title}_src" : [wandb.Image(x, caption=f"Pc(xs): {classes[p]} | Pd(xs):{domains[d]}\nys: {classes[y]}")
-                    for x, p, d, y in zip(self.xs, class_pred_src, domain_pred_src, self.ys)],
-        })
+        if isinstance(domain_logit_src, list):
+            domain_pred_src = [torch.argmax(domain_logit_src[class_idx], dim=1) for class_idx in range(len(domain_logit_src))]
+            trainer.logger.experiment.log({
+                f"{self.title}_src" : [wandb.Image(x, caption=f"Pc(xs): {classes[p]} | Pd(xs):{domains[d[p]]}\nys: {classes[y]}")
+                        for x, p, d, y in zip(self.xs, class_pred_src, domain_pred_src, self.ys)],
+            })
+        else:
+            domain_pred_src = torch.argmax(domain_logit_src, dim=1)
+            trainer.logger.experiment.log({
+                f"{self.title}_src" : [wandb.Image(x, caption=f"Pc(xs): {classes[p]} | Pd(xs):{domains[d]}\nys: {classes[y]}")
+                        for x, p, d, y in zip(self.xs, class_pred_src, domain_pred_src, self.ys)],
+            })
 
         if self.title == "Test_Preds":
             self.xt = self.xt.to(device=pl_module.device)
             class_logit_tgt, domain_logit_tgt = pl_module(self.xt)
             class_pred_tgt = torch.argmax(F.softmax(class_logit_tgt, dim=1), dim=1)
-            domain_pred_tgt = torch.argmax(domain_logit_tgt, dim=1)
-            
-            trainer.logger.experiment.log({
-            f"{self.title}_tqt" : [wandb.Image(x, caption=f"Pc(xt): {classes[p]} | Pd(xt):{domains[d]}\nyt: {classes[y]}")
-                    for x, p, d, y in zip(self.xt, class_pred_tgt, domain_pred_tgt, self.yt)],
-            })
+            if isinstance(domain_logit_tgt, list):
+                domain_pred_tgt = [torch.argmax(domain_logit_tgt[class_idx], dim=1) for class_idx in range(len(domain_logit_tgt))]
+                trainer.logger.experiment.log({
+                f"{self.title}_tqt" : [wandb.Image(x, caption=f"Pc(xt): {classes[p]} | Pd(xt):{domains[d[p]]}\nyt: {classes[y]}")
+                        for x, p, d, y in zip(self.xt, class_pred_tgt, domain_pred_tgt, self.yt)],
+                })
+                
+            else:
+                domain_pred_tgt = torch.argmax(domain_logit_tgt, dim=1)
+                trainer.logger.experiment.log({
+                f"{self.title}_tqt" : [wandb.Image(x, caption=f"Pc(xt): {classes[p]} | Pd(xt):{domains[d]}\nyt: {classes[y]}")
+                        for x, p, d, y in zip(self.xt, class_pred_tgt, domain_pred_tgt, self.yt)],
+                })
