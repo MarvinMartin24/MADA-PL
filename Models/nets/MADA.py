@@ -17,7 +17,10 @@ class MADA(pl.LightningModule):
         super().__init__()
         self.cfg = cfg
         self.mode = mode
-
+        
+        if mode == 'Inference':
+            self.num_classes = 31 if self.cfg['input']['dataset']['src'] in ['AMAZON', 'DSLR', 'WEBCAM'] else 10 #OFFICE31 OR MNIST
+            
         if mode == 'Train':
             
             self.len_dataloader = dataModule.len_dataloader
@@ -30,18 +33,18 @@ class MADA(pl.LightningModule):
             self.save_hyperparameters()
 
             # Init Train metrics for source and targets
-            self.train_accuracy_class =  pl.metrics.Accuracy()
+            self.train_accuracy_class =  pl.metrics.Accuracy().to(torch.device("cuda", 0))
             self.train_accuracy_domain = {} 
             for class_idx in self.classes:
-                self.train_accuracy_domain[f"train_accuracy_domain_src_{class_idx}"] = pl.metrics.Accuracy()
-                self.train_accuracy_domain[f"train_accuracy_domain_tgt_{class_idx}"] = pl.metrics.Accuracy()
+                self.train_accuracy_domain[f"train_accuracy_domain_src_{class_idx}"] = pl.metrics.Accuracy().to(torch.device("cuda", 0))
+                self.train_accuracy_domain[f"train_accuracy_domain_tgt_{class_idx}"] = pl.metrics.Accuracy().to(torch.device("cuda", 0))
 
             # Init Val metrics for source (only on the class)
-            self.val_accuracy_class =  pl.metrics.Accuracy()
+            self.val_accuracy_class =  pl.metrics.Accuracy().to(torch.device("cuda", 0))
             
             # Init test metrics for source and targets
-            self.test_accuracy_class_src =  pl.metrics.Accuracy()
-            self.test_accuracy_class_tgt =  pl.metrics.Accuracy()
+            self.test_accuracy_class_src =  pl.metrics.Accuracy().to(torch.device("cuda", 0))
+            self.test_accuracy_class_tgt =  pl.metrics.Accuracy().to(torch.device("cuda", 0))
                 
 
         self.backbone, in_features = load_backbone(name=cfg['model']['backbone'], pretrained=cfg['model']['pretrained_backbone'])
@@ -50,16 +53,16 @@ class MADA(pl.LightningModule):
             if n < cfg['model']['n_layers_freeze']:
                 p.requires_grad_(False)
 
-        #for n, p in self.named_parameters():
-            #print('{} {}'.format(n, p.requires_grad))
+        for n, p in self.named_parameters():
+            print('{} {}'.format(n, p.requires_grad))
 
         self.class_classifier = load_classifier(name=cfg['model']['class_classifier'], 
                                                 input_size=in_features, 
-                                                output_size=dataModule.num_classes)
+                                                output_size=self.num_classes)
 
         self.domain_classifiers = [
             load_classifier(name=cfg['model']['domain_classifier'], input_size=in_features, output_size=2).cuda()
-            for _ in self.classes
+            for _ in range(self.num_classes)
         ]
         
 
@@ -208,7 +211,7 @@ class MADA(pl.LightningModule):
             optimizer = torch.optim.Adam(
                 model_parameter,
                 lr=self.cfg['training']['optimizer']['lr'],
-                betas=(0.9, 0.999),
+                betas=(self.cfg['training']['optimizer']['momentum'], 0.999),
                 weight_decay=self.cfg['training']['optimizer']['weight_decay'])
         else:
              raise Exception("Optimizer not implemented yet, please use Adam or SGD.")

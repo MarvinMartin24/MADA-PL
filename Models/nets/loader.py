@@ -4,13 +4,6 @@ import torch.nn as nn
 
 
 def load_backbone(name=None, pretrained=False):
-    if name == "alexnet":
-        print('Load resnet18, pretrained weights : {}'.format(pretrained))
-        alexnet = torchvision.models.alexnet(pretrained=True if pretrained == 'imagenet' else False)
-        # remove fully connected layer:
-        features = nn.Sequential(*list(resnet.children())[:-1])
-        in_features = alexnet.classifier[1].in_features
-
     if name == "resnet18":
         print('Load resnet18, pretrained weights : {}'.format(pretrained))
         resnet = torchvision.models.resnet18(pretrained=True if pretrained == 'imagenet' else False)
@@ -18,19 +11,22 @@ def load_backbone(name=None, pretrained=False):
         features = nn.Sequential(*list(resnet.children())[:-1])
         in_features = resnet.fc.in_features
 
-    if name == "resnet34":
+    elif name == "resnet34":
         print('Load resnet34, pretrained weights : {}'.format(pretrained))
         resnet = torchvision.models.resnet34(pretrained=True if pretrained == 'imagenet' else False)
         # remove fully connected layer:
         features = nn.Sequential(*list(resnet.children())[:-1])
         in_features = resnet.fc.in_features
 
-    if name == "resnet152":
+    elif name == "resnet152":
         print('Load resnet152, pretrained weights : {}'.format(pretrained))
         resnet = torchvision.models.resnet152(pretrained=True if pretrained == 'imagenet' else False)
         # remove fully connected layer:
         features = nn.Sequential(*list(resnet.children())[:-1])
         in_features = resnet.fc.in_features
+    
+    else:
+        raise Exception("Wrong Backbone provided in config file please use resnet18, resnet34, resnet152")
 
     return features, in_features
 
@@ -43,7 +39,7 @@ def load_classifier(name, input_size=None, output_size=None):
         return linear3_bn2_v1(input_size, output_size)
     elif name == 'linear3_bn2_v2':
         return linear3_bn2_v2(input_size, output_size)
-    raise Exception('Name of classifier network given in config not correct')
+    raise Exception('Name of classifier network given in config not correct. Use linear2_dr2_bn, linear2_bn, linear3_bn2_v1, linear3_bn2_v2.')
     
 def linear3_bn2_v1(input_size, output_size):
     return nn.Sequential(OrderedDict([

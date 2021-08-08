@@ -22,19 +22,30 @@ class ConcatDataset(Dataset):
 
 class DataModule(pl.LightningDataModule):
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, experiment_path):
         super().__init__()
         self.cfg = cfg
+        self.experiment_path = experiment_path
 
     def setup(self):
         
         if self.cfg['input']['dataset']['src'] in ['AMAZON', 'DSLR', 'WEBCAM']:
+            for tgt in self.cfg['input']['dataset']['tgts']:
+                assert(tgt in ['AMAZON', 'DSLR', 'WEBCAM']), 'Wrong dataset name provided in config file. Please only use AMAZON, DSLR, WEBCAM.'
             print("Downloading Office31 Dataset...")
-            download_and_extract_office31(self.cfg)
+            download_and_extract_office31(self.cfg, self.experiment_path)
+        
+        elif self.cfg['input']['dataset']['src'] in ['MNIST', 'MNISTM']:
+            print("Download MNIST Dataset..") 
+            for tgt in self.cfg['input']['dataset']['tgts']:
+                assert(tgt in ['MNIST', 'MNISTM']), 'Wrong dataset name provided in config file. Please only use MNIST, MNISTM.'
+        else:
+            raise Exception("Wrong dataset name provided in config file. Please only use AMAZON, DSLR, WEBCAM, MNIST, MNISTM.")
+
 
 
         # Load Train/Val of the Source (train_set_src and val_set_src)
-        self.train_set_src, self.val_set_src, self.test_set_src = get_train_val_test_src(self.cfg)
+        self.train_set_src, self.val_set_src, self.test_set_src = get_train_val_test_src(self.cfg, self.experiment_path)
         
         self.classes = self.train_set_src.dataset.classes
         self.domains = [self.cfg['input']['dataset']['src']] + self.cfg['input']['dataset']['tgts']
@@ -45,7 +56,7 @@ class DataModule(pl.LightningDataModule):
 
 
         # Load Train of the Targets (not val because we only evaluate the class classifier but not the domain classifiers)
-        self.train_set_tgts, self.test_set_tgts = get_train_test_tgts(self.cfg) # is a list of torch Datasets
+        self.train_set_tgts, self.test_set_tgts = get_train_test_tgts(self.cfg, self.experiment_path) # is a list of torch Datasets
 
         # Get the size of the dataloader for the loss later
         min_len_dataloader_tgts = min([len(tgt.dataset) for tgt in self.train_set_tgts])

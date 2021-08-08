@@ -80,7 +80,7 @@ def transform_RGB(transformation):
         transforms.Normalize(transformation['mean'], transformation['std']),
     ])
 
-def download_and_extract_office31(cfg):
+def download_and_extract_office31(cfg, experiment_path):
      office31(
         source_name = "dslr",
         target_name = "amazon",
@@ -89,31 +89,31 @@ def download_and_extract_office31(cfg):
         image_resize=(cfg['input']['dataset']['transformation']['img_size'], cfg['input']['dataset']['transformation']['img_size']),
         group_in_out=True,
         framework_conversion="pytorch",
-        office_path = str(os.path.join(cfg['output']['save_path'], "office31")) #automatically downloads to "~/data"
+        office_path = str(os.path.join(experiment_path, "office31")) #automatically downloads to "~/data"
     )   
 
-def get_train_val_test_src(cfg):
+def get_train_val_test_src(cfg, experiment_path):
    
     if cfg['input']['dataset']['src'] == "MNIST":
         transform_mnist_train = get_transform(cfg["input"]["dataset"]['transformation'], 'src')
-        dataset = torchvision.datasets.MNIST(root=cfg['output']['save_path'], train=True, download=True, transform=transform_mnist_train)
+        dataset = torchvision.datasets.MNIST(root=experiment_path, train=True, download=True, transform=transform_mnist_train)
         train_set, val_set = torch.utils.data.random_split(dataset, [50000, 10000])
-        test_set = torchvision.datasets.MNIST(root=cfg['output']['save_path'], train=False, download=True, transform=transform_mnist_train)
+        test_set = torchvision.datasets.MNIST(root=experiment_path, train=False, download=True, transform=transform_mnist_train)
     
     elif cfg['input']['dataset']['src'] == "AMAZON":
         transform_amazon_train = get_transform(cfg["input"]["dataset"]["transformation"], 'src')
-        dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/amazon/images'), transform=transform_amazon_train)
+        dataset = ImageFolder(root=os.path.join(experiment_path,'office31/amazon/images'), transform=transform_amazon_train)
         train_set, val_set, test_set = torch.utils.data.random_split(dataset, [2253, 282, 282]) 
 
     
     elif cfg['input']['dataset']['src'] == "WEBCAM":
         transform_webcam_train = get_transform(cfg["input"]["dataset"]["transformation"], 'src')
-        dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/webcam/images'), transform=transform_webcam_train)
+        dataset = ImageFolder(root=os.path.join(experiment_path,'office31/webcam/images'), transform=transform_webcam_train)
         train_set, val_set, test_set = torch.utils.data.random_split(dataset, [635, 80, 80])
 
     elif cfg['input']['dataset']['src'] == "DSLR":
         transform_dslr_train = get_transform(cfg["input"]["dataset"]["transformation"], 'src')
-        dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/dslr/images'), transform=transform_dslr_train)
+        dataset = ImageFolder(root=os.path.join(experiment_path,'office31/dslr/images'), transform=transform_dslr_train)
         train_set, val_set, test_set = torch.utils.data.random_split(dataset, [398, 50, 50])
 
 
@@ -121,33 +121,33 @@ def get_train_val_test_src(cfg):
         raise Exception('Source dataset name does not exist')
     return train_set, val_set, test_set
 
-def get_train_test_tgts(cfg):
+def get_train_test_tgts(cfg, experiment_path):
     train_sets = []
     test_sets = []
     for tgt in cfg['input']['dataset']['tgts']:
         
         if tgt == "MNISTM":
             transform_mnistm_train = get_transform(cfg["input"]["dataset"]['transformation'], 'tgt')
-            dataset = MNISTM(root=cfg['output']['save_path'], train=True, download=True, transform=transform_mnistm_train)
+            dataset = MNISTM(root=experiment_path, train=True, download=True, transform=transform_mnistm_train)
             train_set_tgt, _ = torch.utils.data.random_split(dataset, [50000, 10000])
-            test_set_tgt = MNISTM(root=cfg['output']['save_path'], train=False, download=True, transform=transform_mnistm_train)
+            test_set_tgt = MNISTM(root=experiment_path, train=False, download=True, transform=transform_mnistm_train)
             train_sets.append(train_set_tgt)
             test_sets.append(test_set_tgt)
         elif tgt == "AMAZON":
             transform_amazon_train = get_transform(cfg["input"]["dataset"]['transformation'], 'tgt')
-            dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/amazon/images'), transform=transform_amazon_train)
+            dataset = ImageFolder(root=os.path.join(experiment_path,'office31/amazon/images'), transform=transform_amazon_train)
             train_set_tgt, test_set_tgt = torch.utils.data.random_split(dataset, [2535, 282])
             train_sets.append(train_set_tgt)
             test_sets.append(test_set_tgt)
         elif tgt == "DSLR":
             transform_dslr_train = get_transform(cfg["input"]["dataset"]['transformation'], 'tgt')
-            dataset = ImageFolder(root=os.path.join(cfg['output']['save_path'],'office31/dslr/images'), transform=transform_dslr_train)
+            dataset = ImageFolder(root=os.path.join(experiment_path,'office31/dslr/images'), transform=transform_dslr_train)
             train_set_tgt, test_set_tgt = torch.utils.data.random_split(dataset, [448, 50])
             train_sets.append(train_set_tgt)
             test_sets.append(test_set_tgt)
         elif tgt == "WEBCAM":
             transform_webcam_train = get_transform(cfg["input"]["dataset"]['transformation'], 'tgt')
-            dataset = ImageFolder(root=(cfg['output']['save_path'],'office31/webcam/images'), transform=transform_webcam_train)
+            dataset = ImageFolder(root=os.path.join(experiment_path,'office31/webcam/images'), transform=transform_webcam_train)
             train_set_tgt, test_set_tgt = torch.utils.data.random_split(dataset, [715, 80])
             train_sets.append(train_set_tgt)
             test_sets.append(test_set_tgt)

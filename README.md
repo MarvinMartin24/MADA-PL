@@ -46,7 +46,7 @@ Install nvidia-docker2 to access GPU from a Docker container
 Please visit: [Nvidia container-toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
 
 ```bash
-export EXPERIMENT_FOLDER=/home/user/Documents/Experiments
+export EXPERIMENT_FOLDER= OWN_EXPERIMENT_FOLDER_PATH
 ```
 
 ```bash
@@ -65,9 +65,17 @@ docker run \
 ```
 
 ```python
-root@28bbba0f0496:/# wandb login
+root@28bbba0f0496:/ wandb login
 ```
 
 ```python
-root@28bbba0f0496:/# cd /Models/ && python3 /Models/run.py
+root@28bbba0f0496:/ cd /Models/
+root@28bbba0f0496:/ python3 run.py --help # recommended
+
+# Training
+root@28bbba0f0496:/ python3 run.py --mode Train --cfg OWN_CONFIG.yml --experiment $EXPERIMENT_FOLDER
+
+# Inference
+root@28bbba0f0496:/ python3 run.py --mode Inference --cfg OWN_CONFIG.yml --ckpt MODEL_WEIGHTS_PATH --img_path IMAGE_PATH
+
 ```
