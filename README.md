@@ -9,7 +9,7 @@ We also used the [Weight and Biases](https://wandb.ai/) logger to track our expe
 
 ## Goal
 
-The goal of (Multiple) Domain adversarial training is to train models so that they can perform better on images from other distributions (targets) than the distribution (source) on which they were trained using class labels. Using transfer learning and game therory, we can use unlabeled target image datasets to force the feature extractor (large pretrained convolution neural network) to generate background invariant features. Using adversarial training can help build more robust deep learning models.
+The goal of (Multiple) Domain adversarial training is to train models so that they can perform better on images from other (targets) distributions compare to the distribution (source) on which they were trained using class labels. Using transfer learning and game therory, we can use unlabeled target image datasets to force the feature extractor (large pretrained convolution neural network) to generate background invariant features. Using adversarial training can help build more robust deep learning models.
 
 
 ## Datasets
@@ -35,6 +35,11 @@ For both datasets, we splited the dataset into 3 subset: Train, Val, Test.
 To train our models we used [Weights and Biases](https://wandb.ai/site).
 Weights and Biases allows to do experiment tracking, dataset versioning, model management, training visualisation for ML projects.
 The code of this repository requires to create a [wand account](https://app.wandb.ai/login?signup=true) (for free using your github account) and to login using the [API KEY](https://wandb.ai/authorize).
+
+### Visualize Trainings experiments
+
+Please check [our wandb runs dashboards](https://wandb.ai/marvtin/MADA-PL/runs).
+Wandb allows to compare models performances and keep track of the past strategies.
 
 ### GPU
 
@@ -145,6 +150,7 @@ root@28bbba0f0496:/ python3 run.py --mode Inference --cfg OWN_CONFIG.yml --ckpt 
 ## Contributors
 This project is part of a 2021 Deep Learning Class project (at Boston University CS523).
 The code has been realized by Marvin Martin (marvtin@bu.edu) and Anirudh Mandahr (anirudh1@bu.edu).
+We also thanks our Professor Peter Chin and Teacher Assistant Andrew Wood for supervising our work.
 
 
 

@@ -20,6 +20,8 @@ class MADA(pl.LightningModule):
         
         if mode == 'Inference':
             self.num_classes = 31 if self.cfg['input']['dataset']['src'] in ['AMAZON', 'DSLR', 'WEBCAM'] else 10 #OFFICE31 OR MNIST
+            self.backbone_fixed, _ = load_backbone(name=cfg['model']['backbone'], pretrained=cfg['model']['pretrained_backbone'])
+
             
         if mode == 'Train':
             
@@ -48,7 +50,7 @@ class MADA(pl.LightningModule):
                 
 
         self.backbone, in_features = load_backbone(name=cfg['model']['backbone'], pretrained=cfg['model']['pretrained_backbone'])
-
+        
         for n, p in enumerate(self.parameters()):
             if n < cfg['model']['n_layers_freeze']:
                 p.requires_grad_(False)
@@ -239,3 +241,12 @@ class MADA(pl.LightningModule):
 
     def get_lambda_p(self, p):
         return  2. / (1. + np.exp(-self.cfg['training']['scheduler']['gamma'] * p)) - 1
+        
+    def extract_features(self, x):
+        if self.mode != 'Inference':
+            raise Exception('extract_features can only be used during inference')
+        features_invariant = self.backbone(x)
+        features = self.backbone_fixed(x)
+        features_invariant = features_invariant.reshape(features_invariant.size(0), -1)
+        features = features.reshape(features.size(0), -1)
+        return features, features_invariant
