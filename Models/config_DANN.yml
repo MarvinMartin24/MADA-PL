@@ -19,7 +19,7 @@ model:
 
 training:
   gpus: 1
-  num_workers: 4
+  num_workers: 0
   optimizer:
     type: Adam #Adam, SGD
     momentum: 0.9

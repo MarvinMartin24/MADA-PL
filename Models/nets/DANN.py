@@ -128,13 +128,11 @@ class DANN(pl.LightningModule):
         class_logit_src, _ = self(xs)
         class_pred_src = F.softmax(class_logit_src, dim=1)
         loss_src = self.criterion_class(class_logit_src, ys)
-        features_src, features_invariant_src = self.extract_features(xs)
         
         # Test Target
         class_logit_tgt, _ = self(xt)
         class_pred_tgt = F.softmax(class_logit_tgt, dim=1)
         loss_tgt = self.criterion_class(class_logit_tgt, yt)
-        features_tgt, features_invariant_tgt = self.extract_features(xt)
         
         return {'loss_src': loss_src, 
                 'loss_tgt': loss_tgt,
@@ -217,10 +215,9 @@ class DANN(pl.LightningModule):
         return  2. / (1. + np.exp(-self.cfg['training']['scheduler']['gamma'] * p)) - 1
 
     def extract_features(self, x):
-        if self.mode != 'Inference':
-            raise Exception('extract_features can only be used during inference')
-        features_invariant = self.backbone(x)
-        features = self.backbone_fixed(x)
-        features_invariant = features_invariant.reshape(features_invariant.size(0), -1)
-        features = features.reshape(features.size(0), -1)
-        return features, features_invariant
+        features_backbone = self.backbone(x)
+        features_backbone = features_backbone.reshape(features_backbone.size(0), -1)
+        
+        features_pretrained = self.backbone_fixed(x)
+        features_pretrained = features_pretrained.reshape(features_pretrained.size(0), -1)
+        return features_pretrained, features_backbone

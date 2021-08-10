@@ -17,6 +17,7 @@ import pytorch_lightning as pl
 from tools.DataModule import DataModule
 from tools.utils import ImagePredictionLogger
 from tools.utils import get_transform
+from nets.DCNN import DCNN
 from nets.DANN import DANN
 from nets.MADA import MADA
 
@@ -55,6 +56,8 @@ class Runner:
                 self.net = DANN(self.cfg, mode) # create empty model
             elif self.model_type == "MADA":
                 self.net = MADA(self.cfg, mode) # create empty model
+            elif self.model_type == "DCNN":
+                self.net = DCNN(self.cfg, mode) # create empty model
             else:
                 raise Exception("Wrong model type provided in the configuration file, please use DANN or MADA.")
 
@@ -140,6 +143,11 @@ class Runner:
             self.net = MADA(self.cfg,
                             mode='Train',
                             dataModule=self.dataModule)
+        elif self.model_type == "DCNN":
+            self.net = DCNN(self.cfg,
+                            mode='Train',
+                            dataModule=self.dataModule)
+            callbacks = [checkpoint_callback]
         else:
             raise Exception("Wrong model type provided in the configuration file, please use DANN or MADA.")
 
