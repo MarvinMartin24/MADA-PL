@@ -166,11 +166,17 @@ This saving strategy allows to keep track of the experiments, compare configurat
 
 Please visit `Notebooks/Latent-Space-Exploration.ipynb`. This notebook typically provide an example of how to run infrences without the run.py command. Also, We explored the latent space (resulting from the feature extract, e.g backbone) for all 3 models DCNN, DANN, MADA for the MNIST and MNISTM Dataset. The goal was to visualize in a 3D space the feature representation for each distribution. To reduce the dimensionality of the extracted features we used TSNE. Domain Adversarial models (DANN, MADA) are expected to have better feature representation on the target domain, and both distribution should be indistinguishable in the 3D space.
 
+### Pretrained RESNET (Not retrained) Domain Distribution
 ![RESNET](/Notebooks/Backbone_pretrained_Feature_representation.png)
-![DCNN](/Notebooks/DCNN_Feature_representation.png)
-![DANN](/Notebooks/DANN_Feature_representation.png)
-![MADA](/Notebooks/MDA_Feature_representation.png)
 
+###  DCNN (Trained only on Source) Domain Distribution
+![DCNN](/Notebooks/DCNN_Feature_representation.png)
+
+### DANN (Trained using GRL) Domain Distribution
+![DANN](/Notebooks/DANN_Feature_representation.png)
+
+### MADA (Trained using GRL, class-wise) Domain Distribution
+![MADA](/Notebooks/MADA_Feature_representation.png)
 
 ## Contributors
 This project is part of a 2021 Deep Learning Class project (at Boston University CS523).
