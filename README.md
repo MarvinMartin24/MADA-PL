@@ -63,7 +63,7 @@ cat Models/config_MADA.yml
 You can choose many different things such as:
  * Source and Target Dataset. For MNIST classification, you use `MNIST`, `MNISTM`. For Office31 classification, you can use `AMAZON`, `DSLR`, `WEBCAM`.
  * Input image size (recommend 28 for MNIST, and 224 for Office31)
- * Transformation to apply on data (`transform_GS_DA`, `transform_GS`, `transform_RGB_DA`, `transform_RGB`, `transform_mnist`, `transform_mnistm` ). Please look at `tools/utils.py` to find the one that best fit your desired transformation
+ * Transformation to apply on data (`transform_RGB_DA`, `transform_RGB`, `transform_mnist`, `transform_mnistm` ). Please look at `tools/utils.py` to find the one that best fit your desired transformation
  * Normalization (mean and std). If you use pretraine model, please use the correspond mean and std of the paper.
  * Model Type, that can either be `DANN` (Domain Aversarial Neural Network) or `MADA` (Multi-Adversarial Domain Adaptation)
  * Backbone Model(only RESNET) that can be: `resnet18`, `resnet34`, `resnet152`

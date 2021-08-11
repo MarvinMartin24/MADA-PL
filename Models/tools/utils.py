@@ -14,12 +14,8 @@ from torchvision.datasets import ImageFolder
 from office31 import office31
 
 def get_transform(transformation, domain):
-    if transformation[domain] == 'transform_GS_DA':
-        return transform_GS(transformation)
-    elif transformation[domain] == 'transform_RGB_DA':
+    if transformation[domain] == 'transform_RGB_DA':
         return transform_RGB(transformation)
-    elif transformation[domain] == 'transform_GS':
-        return transform_GS(transformation)
     elif transformation[domain] == 'transform_RGB':
         return transform_RGB(transformation)
     elif transformation[domain] == 'transform_mnist':
@@ -41,25 +37,6 @@ def transform_mnistm(transformation):
         transforms.CenterCrop(size=(transformation['img_size'], transformation['img_size'])),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5]),
-    ])
-
-def transform_GS_DA(transformation):
-    return transforms.Compose([
-        transforms.Resize(transformation['img_size']),
-        transforms.Grayscale(num_output_channels=3),
-        transforms.RandomHorizontalFlip(0.3),
-        transforms.RandomRotation(0.3),
-        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
-        transforms.ToTensor(),
-        transforms.Normalize(transformation['mean'], transformation['std']),
-    ])
-
-def transform_GS(transformation):
-    return transforms.Compose([
-        transforms.Resize(transformation['img_size']),
-        transforms.Grayscale(num_output_channels=3),
-        transforms.ToTensor(),
-        transforms.Normalize(transformation['mean'], transformation['std']),
     ])
 
 def transform_RGB_DA(transformation):
