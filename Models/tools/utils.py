@@ -99,6 +99,12 @@ def get_train_val_test_src(cfg, experiment_path):
         dataset = torchvision.datasets.MNIST(root=experiment_path, train=True, download=True, transform=transform_mnist_train)
         train_set, val_set = torch.utils.data.random_split(dataset, [50000, 10000])
         test_set = torchvision.datasets.MNIST(root=experiment_path, train=False, download=True, transform=transform_mnist_train)
+        
+    elif cfg['input']['dataset']['src'] == "MNISTM":
+        transform_mnistm_train = get_transform(cfg["input"]["dataset"]['transformation'], 'src')
+        dataset = MNISTM(root=experiment_path, train=True, download=True, transform=transform_mnistm_train)
+        train_set, val_set = torch.utils.data.random_split(dataset, [50000, 10000])
+        test_set = MNISTM(root=experiment_path, train=False, download=True, transform=transform_mnistm_train)
     
     elif cfg['input']['dataset']['src'] == "AMAZON":
         transform_amazon_train = get_transform(cfg["input"]["dataset"]["transformation"], 'src')
@@ -133,6 +139,15 @@ def get_train_test_tgts(cfg, experiment_path):
             test_set_tgt = MNISTM(root=experiment_path, train=False, download=True, transform=transform_mnistm_train)
             train_sets.append(train_set_tgt)
             test_sets.append(test_set_tgt)
+            
+        elif tgt == "MNIST":
+            transform_mnist_train = get_transform(cfg["input"]["dataset"]['transformation'], 'tgt')
+            dataset = torchvision.datasets.MNIST(root=experiment_path, train=True, download=True, transform=transform_mnist_train)
+            train_set_tgt, _ = torch.utils.data.random_split(dataset, [50000, 10000])
+            test_set_tgt = torchvision.datasets.MNIST(root=experiment_path, train=False, download=True, transform=transform_mnist_train)
+            train_sets.append(train_set_tgt)
+            test_sets.append(test_set_tgt)
+            
         elif tgt == "AMAZON":
             transform_amazon_train = get_transform(cfg["input"]["dataset"]['transformation'], 'tgt')
             dataset = ImageFolder(root=os.path.join(experiment_path,'office31/amazon/images'), transform=transform_amazon_train)

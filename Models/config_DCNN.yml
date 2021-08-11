@@ -1,11 +1,11 @@
 input:
   dataset:
-    src: "MNIST" # Source Dataset name(MNIST or WEBCAM)
-    tgts: ["MNISTM"] # Target Datasets name, please do not provide several targets for MADA.
+    src: "DSLR" # Source Dataset name(MNIST or WEBCAM)
+    tgts: ["AMAZON"] # Target Datasets name, please do not provide several targets for MADA.
     transformation :
-        img_size: 128 # size of input if images input
-        src : transform_mnist # name of the transform to perform on source data
-        tgt : transform_mnistm # name of the transform to perform on target data
+        img_size: 28  # size of input if images input
+        src : transform_RGB_DA # name of the transform to perform on source data
+        tgt : transform_RGB_DA # name of the transform to perform on target data
         mean: [0.485, 0.456, 0.406] # mean used for normalization (from resnet)
         std: [0.229, 0.224, 0.225] # std used for normalization (from resnet)
 
@@ -14,23 +14,23 @@ model:
   backbone: resnet18 #resnet18, resnet34, resnet152
   pretrained_backbone: imagenet # if not imagenet then not pretrained
   n_layers_freeze: 0 # Depends on your backbone
-  class_classifier: linear3_bn2_v2  # linear2_dr2_bn, linear2_bn, linear3_bn2_v1, linear3_bn2_v2
+  class_classifier: linear2_bn  # linear2_dr2_bn, linear2_bn, linear3_bn2_v1, linear3_bn2_v2
 
 training:
   gpus: 1
   num_workers: 0
   optimizer:
-    type: SGD #Adam, SGD
+    type: Adam #Adam, SGD
     momentum: 0.9
-    lr: 0.01
+    lr: 0.001
     weight_decay: 2.5e-5
   scheduler:
     lr_schedule: true
     alpha: 10
     gamma: 10
     beta: 0.75
-  batch_size: 64
-  epochs: 2
+  batch_size: 256
+  epochs: 100
 
 seed: 8888 #random seed for reproducibilty
 
