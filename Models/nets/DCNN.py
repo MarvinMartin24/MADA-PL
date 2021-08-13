@@ -1,3 +1,4 @@
+#importing files
 import numpy as np
 import torch.nn as nn
 import torch
@@ -39,7 +40,7 @@ class DCNN(pl.LightningModule):
             self.test_accuracy_class_tgt =  pl.metrics.Accuracy().to(torch.device("cuda", 0))
 
 
-
+#load ResNet
         self.backbone, in_features = load_backbone(name=cfg['model']['backbone'], pretrained=cfg['model']['pretrained_backbone'])
         
         for n, p in enumerate(self.parameters()):
@@ -58,7 +59,7 @@ class DCNN(pl.LightningModule):
         features = features.reshape(features.size(0), -1)
         class_pred = self.class_classifier(features)
         return class_pred, None
-
+#training the model
     def training_step(self, batch, batch_idx):
         # Apply Learning rate schedular
         self.lr_schedule_step(p=self.get_p())
