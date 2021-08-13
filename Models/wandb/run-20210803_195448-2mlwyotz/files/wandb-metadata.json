@@ -1,0 +1,22 @@
+{
+    "os": "Linux-5.4.0-80-generic-x86_64-with-glibc2.17",
+    "python": "3.8.10",
+    "heartbeatAt": "2021-08-03T23:54:50.945675",
+    "startedAt": "2021-08-03T23:54:48.860789",
+    "docker": null,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "run.py",
+    "codePath": "Models/run.py",
+    "git": {
+        "remote": "https://github.com/MarvinMartin24/MADA-PL/",
+        "commit": "ca2c42e5761e6dc22ff1fa4a2dda7dbd3fabddf6"
+    },
+    "email": null,
+    "root": "/home/anirudh/DL/MADA-PL",
+    "host": "anirudh-XPS",
+    "username": "anirudh",
+    "executable": "/home/anirudh/anaconda3/envs/env_pytorch/bin/python3"
+}
